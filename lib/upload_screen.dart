@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ecommerceadmin/Widget/admin_order_icon.dart';
-import 'package:ecommerceadmin/order_screen.dart';
+import 'package:ecommerceadmin/auth/auth_provider.dart';
+import 'package:ecommerceadmin/screens/dashboard_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:provider/provider.dart';
 
 class UploadScreen extends StatefulWidget {
   const UploadScreen({super.key});
@@ -18,11 +19,12 @@ class _UploadScreenState extends State<UploadScreen> {
   final FirebaseStorage storage = FirebaseStorage.instance;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  String? _title, _description, _seller;
+  String? _title, _description;
   double? _price;
   File? _imageFile;
   String _selectedCategory = 'Electronics'; // Default category
   List<Color> _selectedColors = [];
+  String? _storeName;
 
   final ImagePicker _picker = ImagePicker();
   final List<String> _categories = [
@@ -33,6 +35,26 @@ class _UploadScreenState extends State<UploadScreen> {
     'Jewelry',
     'Beauty'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStoreName();
+  }
+
+  Future<void> _fetchStoreName() async {
+    try {
+      final authProviders = Provider.of<AuthProviders>(context, listen: false);
+      await authProviders.fetchUserDetails();
+      setState(() {
+        _storeName = authProviders.storeName;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to fetch store details: $e')),
+      );
+    }
+  }
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
@@ -64,26 +86,28 @@ class _UploadScreenState extends State<UploadScreen> {
   }
 
   Future<void> _saveProductToFirestore(String imageUrl) async {
-    CollectionReference products =
-        FirebaseFirestore.instance.collection('products');
+  CollectionReference products =
+      FirebaseFirestore.instance.collection('products');
 
-    List<String> colorHex = _selectedColors
-        .map((color) => '#${color.value.toRadixString(16)}')
-        .toList();
-
-    await products.add({
-      'title': _title,
-      'description': _description,
-      'price': _price,
-      'seller': _seller,
-      'category': _selectedCategory,
-      'colors': colorHex,
-      'image': imageUrl,
-      'rate': 0.0,
-      'reviews': [],
-      'quantity': 1,
-    });
-  }
+  List<String> colorHex = _selectedColors
+      .map((color) => '#${color.value.toRadixString(16)}')
+      .toList();
+final authProviders = Provider.of<AuthProviders>(context, listen: false);
+  final storeId = authProviders.storeId;
+  await products.add({
+    'title': _title,
+    'description': _description,
+    'price': _price,
+    'store': _storeName,
+    'storeId': storeId, // Include store ID here
+    'category': _selectedCategory,
+    'colors': colorHex,
+    'image': imageUrl,
+    'rate': 0.0,
+    'reviews': [],
+    'quantity': 1,
+  });
+}
 
   Future<void> _uploadProduct() async {
     if (_formKey.currentState!.validate()) {
@@ -179,10 +203,15 @@ class _UploadScreenState extends State<UploadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Upload Product'),
         actions: [
-AdminOrderIcon(),         
+          IconButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => DashboardScreen()));
+              },
+              icon: Icon(Icons.dashboard))
         ],
+        title: const Text('Upload Product'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -193,13 +222,10 @@ AdminOrderIcon(),
               children: [
                 const SizedBox(height: 10),
                 Container(
-                  height: 200,
-                  width: 300,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                  height: 150,
+                  color: Colors.grey[200],
                   child: _imageFile == null
-                      ? const Center(child: Text('No image selected'))
+                      ? Center(child: Text('No image selected'))
                       : Image.file(_imageFile!),
                 ),
                 const SizedBox(height: 10),
@@ -208,127 +234,74 @@ AdminOrderIcon(),
                   child: const Text('Select Image'),
                 ),
                 const SizedBox(height: 10),
-                const Text('Category'),
-                PopupMenuButton<String>(
-                  onSelected: (String category) {
-                    setState(() {
-                      _selectedCategory = category;
-                    });
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Title'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a title';
+                    }
+                    return null;
                   },
-                  child: ListTile(
-                    title: Text(_selectedCategory),
-                    trailing: const Icon(Icons.arrow_drop_down),
-                  ),
-                  itemBuilder: (BuildContext context) {
-                    return _categories.map((String category) {
-                      return PopupMenuItem<String>(
-                        value: category,
-                        child: Text(category),
-                      );
-                    }).toList();
+                  onSaved: (value) => _title = value,
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Description'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a description';
+                    }
+                    return null;
                   },
+                  onSaved: (value) => _description = value,
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Price'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a price';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                  onSaved: (value) => _price = double.tryParse(value!),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  value: _selectedCategory,
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedCategory = value;
+                      });
+                    }
+                  },
+                  items: _categories
+                      .map((category) => DropdownMenuItem(
+                            value: category,
+                            child: Text(category),
+                          ))
+                      .toList(),
+                  decoration: const InputDecoration(labelText: 'Category'),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: _selectColors,
                   child: const Text('Select Colors'),
                 ),
-                Wrap(
-                  children: _selectedColors
-                      .map((color) => Container(
-                            width: 24,
-                            height: 24,
-                            margin: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.grey.shade300,
-                                width: 2,
-                              ),
-                            ),
-                          ))
-                      .toList(),
-                ),
                 const SizedBox(height: 10),
-                AdminInputField(
-                  onSaved: (value) => _title = value,
-                  validator: (value) => value!.isEmpty ? 'Enter title' : null,
-                  labelText: 'Title',
-                ),
-                AdminInputField(
-                  validator: (value) =>
-                      value!.isEmpty ? 'Enter description' : null,
-                  onSaved: (value) => _description = value,
-                  labelText: 'Description',
-                ),
-                AdminInputField(
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value!.isEmpty ? 'Enter price' : null,
-                  onSaved: (value) => _price = double.parse(value!),
-                  labelText: 'Price',
-                ),
-                AdminInputField(
-                  labelText: 'Seller',
-                  validator: (value) =>
-                      value!.isEmpty ? 'Enter seller name' : null,
-                  onSaved: (value) => _seller = value,
-                ),
-                const SizedBox(height: 20),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: const Size(300, 60),
-                    backgroundColor: Colors.purple,
-                  ),
                   onPressed: _uploadProduct,
-                  child: const Text(
-                    'Upload Product',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  child: const Text('Upload Product'),
                 ),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class AdminInputField extends StatelessWidget {
-  const AdminInputField({
-    super.key,
-    this.labelText = 'Title',
-    this.initialValue,
-    required this.onSaved,
-    required this.validator,
-    this.keyboardType,
-  });
-
-  final String labelText;
-  final String? initialValue;
-  final Function(String?) onSaved;
-  final String? Function(String?) validator;
-  final TextInputType? keyboardType;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextFormField(
-        keyboardType: keyboardType,
-        initialValue: initialValue,
-        decoration: InputDecoration(
-          fillColor: Colors.grey.shade300,
-          filled: true,
-          labelText: labelText,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Colors.grey),
-          ),
-        ),
-        validator: validator,
-        onSaved: onSaved,
       ),
     );
   }

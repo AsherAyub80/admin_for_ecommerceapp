@@ -1,70 +1,29 @@
-import 'package:ecommerceadmin/upload_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:ecommerceadmin/auth/auth_provider.dart';
+import 'package:ecommerceadmin/screens/register_store.dart';
 
-class SignIn extends StatefulWidget {
-  const SignIn({super.key});
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+class AdminSignIn extends StatefulWidget {
+  const AdminSignIn({super.key});
 
   @override
-  State<SignIn> createState() => _SignInState();
+  State<AdminSignIn> createState() => _AdminSignInState();
 }
 
-class _SignInState extends State<SignIn> {
+class _AdminSignInState extends State<AdminSignIn> {
   @override
   Widget build(BuildContext context) {
-    FirebaseAuth auth = FirebaseAuth.instance;
     final width = MediaQuery.of(context).size.width;
     TextEditingController emailController = TextEditingController();
     TextEditingController passController = TextEditingController();
 
-    bool isLoading = false;
     @override
     void dispose() {
       ;
       super.dispose();
       emailController.dispose();
       passController.dispose();
-    }
-
-    void signIn() async {
-      final email = emailController.text.trim();
-      final password = passController.text.trim();
-
-      if (email.isEmpty || password.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please enter both email and password')));
-        return;
-      }
-
-      setState(() {
-        isLoading = true;
-      });
-
-      try {
-        await auth.signInWithEmailAndPassword(email: email, password: password);
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => UploadScreen()));
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'user-not-found') {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('User not found for this email')));
-        } else if (e.code == 'wrong-password') {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text('Wrong password')));
-        } else {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text('Error ${e.message}')));
-          print('error $e');
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('An unexpected error occurred')));
-        print('Unexpected error: $e');
-      } finally {
-        setState(() {
-          isLoading = false;
-        });
-      }
     }
 
     return Scaffold(
@@ -100,15 +59,34 @@ class _SignInState extends State<SignIn> {
                     backgroundColor: Colors.purple,
                     fixedSize: Size(width - 100, 60)),
                 onPressed: () {
-                  signIn();
+                  final authProvider =
+                      Provider.of<AuthProviders>(context, listen: false);
+                  authProvider.signInAsAdmin(
+                    emailController.text,
+                    passController.text,
+                  );
                 },
-                child: isLoading
-                    ? CircularProgressIndicator()
-                    : Text(
-                        'Sign in',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
-                      ))
+                child: Text(
+                  'Sign in As admin',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                )),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Want to Register your own store?'),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => RegisterStore()));
+                  },
+                  child: Text('Create Now',
+                      style: TextStyle(color: Colors.deepPurple)),
+                ),
+              ],
+            )
           ],
         ),
       ),
