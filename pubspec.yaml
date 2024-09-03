@@ -44,6 +44,7 @@ dependencies:
   provider: ^6.1.2
   flutter_chart: ^0.1.6
   fl_chart: ^0.69.0
+  font_awesome_flutter: ^10.7.0
 
 dev_dependencies:
   flutter_test:

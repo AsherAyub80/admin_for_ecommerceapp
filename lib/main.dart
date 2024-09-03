@@ -11,13 +11,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  final provider = StoreStaticsProvider();
-  await provider.fetchStatistics('your-store-id');
-  print('Today Sales: ${provider.todaySales}');
-  print('Weekly Sales: ${provider.weeklySales}');
-  print('Monthly Sales: ${provider.monthlySales}');
-  print('Positive Reviews: ${provider.positiveReviews}');
-  print('Negative Reviews: ${provider.negativeReviews}');
+
   runApp(const MyApp());
 }
 

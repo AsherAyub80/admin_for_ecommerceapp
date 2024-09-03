@@ -1,3 +1,4 @@
+import 'package:ecommerceadmin/Widget/monthly_graph.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -7,6 +8,10 @@ import 'package:ecommerceadmin/provider/store_statics_provider.dart';
 class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
+    final isWideScreen = width > 800; // Define what constitutes a "wide" screen
+
     final storeId = Provider.of<AuthProviders>(context).storeId;
     final statsProvider = Provider.of<StoreStaticsProvider>(context);
 
@@ -40,198 +45,336 @@ class DashboardScreen extends StatelessWidget {
             ReviewData('Negative', negativePercentage.toDouble()),
           ];
 
-          String formatChange(double value) {
-            return value > 0
-                ? '+${value.toStringAsFixed(2)}%'
-                : '${value.toStringAsFixed(2)}%';
-          }
-
           return SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Today\'s Sales: \$${provider.todaySales.toStringAsFixed(2)}',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Change from Yesterday: ${formatChange(provider.getTodaySalesChange())}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: provider.getTodaySalesChange() >= 0
-                              ? Colors.green
-                              : Colors.red,
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        'This Week\'s Sales: \$${provider.weeklySales.toStringAsFixed(2)}',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Change from Last Week: ${formatChange(provider.getWeeklySalesChange())}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: provider.getWeeklySalesChange() >= 0
-                              ? Colors.green
-                              : Colors.red,
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        'This Month\'s Sales: \$${provider.monthlySales.toStringAsFixed(2)}',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Change from Last Month: ${formatChange(provider.getMonthlySalesChange())}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: provider.getMonthlySalesChange() >= 0
-                              ? Colors.green
-                              : Colors.red,
-                        ),
-                      ),
-                      SizedBox(height: 32),
-                    ],
-                  ),
+                // Sales Summary Row
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final itemWidth = isWideScreen
+                        ? (constraints.maxWidth - 40) / 3
+                        : constraints.maxWidth -
+                            32; // Responsive width for smaller screens
+
+                    return isWideScreen
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              buildSalesSummaryItem(
+                                  'Today\'s Sales',
+                                  provider.todaySales,
+                                  provider.getTodaySalesChange(),
+                                  height,
+                                  itemWidth),
+                              buildSalesSummaryItem(
+                                  'This Week\'s Sales',
+                                  provider.weeklySales,
+                                  provider.getWeeklySalesChange(),
+                                  height,
+                                  itemWidth),
+                              buildSalesSummaryItem(
+                                  'This Month\'s Sales',
+                                  provider.monthlySales,
+                                  provider.getMonthlySalesChange(),
+                                  height,
+                                  itemWidth),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              buildSalesSummaryItem(
+                                  'Today\'s Sales',
+                                  provider.todaySales,
+                                  provider.getTodaySalesChange(),
+                                  height,
+                                  itemWidth),
+                              SizedBox(height: 16),
+                              buildSalesSummaryItem(
+                                  'This Week\'s Sales',
+                                  provider.weeklySales,
+                                  provider.getWeeklySalesChange(),
+                                  height,
+                                  itemWidth),
+                              SizedBox(height: 16),
+                              buildSalesSummaryItem(
+                                  'This Month\'s Sales',
+                                  provider.monthlySales,
+                                  provider.getMonthlySalesChange(),
+                                  height,
+                                  itemWidth),
+                            ],
+                          );
+                  },
                 ),
-
-                // Sales Chart
-                if (salesData.isNotEmpty)
-
+                SizedBox(height: 32),
+                buildRevenueContainer(provider, height, width, isWideScreen),
+                SizedBox(height: 32),
+                if (isWideScreen)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: MonthlySalesGraph()),
+                      Expanded(
+                          child:
+                              buildReviewsAnalysis(reviewData, totalReviews)),
+                    ],
+                  )
+                else
                   Column(
                     children: [
-                      Text(
-                        'Sales Chart',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(16.0),
-                        height: 300,
-                        child: BarChart(
-                          BarChartData(
-                            gridData: FlGridData(
-                              show: true,
-                              drawHorizontalLine: true,
-                              horizontalInterval: 10,
-                              drawVerticalLine: false,
-                            ),
-                            borderData: FlBorderData(
-                              show: true,
-                              border: Border.all(
-                                color: Colors.grey,
-                                width: 1,
-                              ),
-                            ),
-                            titlesData: FlTitlesData(
-                              bottomTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 40,
-                                  getTitlesWidget: (value, meta) {
-                                    final index = value.toInt();
-                                    return SideTitleWidget(
-                                      axisSide: meta.axisSide,
-                                      child: Text(
-                                        salesData[index].label,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              leftTitles: AxisTitles(
-                                sideTitles: SideTitles(showTitles: true),
-                              ),
-                            ),
-                            barGroups: salesData.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final data = entry.value;
-                              return BarChartGroupData(
-                                x: index,
-                                barRods: [
-                                  BarChartRodData(
-                                    toY: data.value,
-                                    color: Colors.blue,
-                                    width: 20,
-                                    backDrawRodData: BackgroundBarChartRodData(
-                                      toY: 0,
-                                      color: Colors.grey[200],
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
+                      MonthlySalesGraph(),
+                      SizedBox(height: 32),
+                      buildReviewsAnalysis(reviewData, totalReviews),
                     ],
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'No sales data available.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
                   ),
 
-                Text(
-                  'Reviews Chart',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                // Reviews Chart
-                if (reviewData.isNotEmpty && totalReviews > 0)
-                  Container(
-                    padding: const EdgeInsets.all(16.0),
-                    height: 300,
-                    child: PieChart(
-                      PieChartData(
-                        sections: reviewData.map((data) {
-                          return PieChartSectionData(
-                            value: data.value,
-                            title:
-                                '${data.label}\n${data.value.toStringAsFixed(1)}%',
-                            titleStyle: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                            color: data.label == 'Positive'
-                                ? Colors.green
-                                : Colors.red,
-                            radius: 50,
-                          );
-                        }).toList(),
-                        borderData: FlBorderData(
-                          show: false,
-                        ),
-                        sectionsSpace: 0,
-                      ),
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'No review data available.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  ),
+                SizedBox(height: 32),
+
+                buildSalesChart(salesData, isWideScreen),
+                SizedBox(height: 32),
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget buildSalesSummaryItem(
+      String title, double sales, double change, double height, double width) {
+    return Container(
+      width: width,
+      padding: EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+                fontSize: height * 0.022, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Sales: \$${sales.toStringAsFixed(2)}',
+            style: TextStyle(fontSize: height * 0.02),
+          ),
+          SizedBox(height: 8),
+          Row(
+            children: [
+              formatChange(change),
+              SizedBox(width: 4),
+              Text(
+                "${change.toStringAsFixed(2)}%",
+                style: TextStyle(
+                  fontSize: height * 0.02,
+                  color: change >= 0 ? Colors.green : Colors.red,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildRevenueContainer(StoreStaticsProvider provider, double height,
+      double width, bool isWideScreen) {
+    return Center(
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 2,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        width: isWideScreen ? width * 0.6 : width * 0.9, // Responsive width
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Total Revenue',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: height * 0.024,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              "\$${provider.totalSales.toStringAsFixed(2)}",
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: height * 0.04,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Total Revenue :${provider.getTotalRevenuePercentageChange() >= 0 ? '+' : "-"} ${provider.getTotalRevenuePercentageChange().toStringAsFixed(2)}%',
+              style: TextStyle(
+                color: provider.getTotalRevenuePercentageChange() >= 0
+                    ? Colors.green
+                    : Colors.red,
+                fontSize: height * 0.02,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildSalesChart(List<SalesData> salesData, isWide) {
+    return salesData.isNotEmpty
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Sales Analysis',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              Container(
+                padding: EdgeInsets.all(isWide ? 30 : 16.0),
+                height: 300,
+                child: BarChart(
+                  BarChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawHorizontalLine: true,
+                      horizontalInterval: 10,
+                      drawVerticalLine: false,
+                    ),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border.all(
+                        color: Colors.grey,
+                        width: 1,
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            return SideTitleWidget(
+                              axisSide: meta.axisSide,
+                              child: Text(
+                                salesData[index].label,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: true),
+                      ),
+                    ),
+                    barGroups: salesData.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final data = entry.value;
+                      return BarChartGroupData(
+                        x: index,
+                        barRods: [
+                          BarChartRodData(
+                            toY: data.value,
+                            color: Colors.blue,
+                            width: 20,
+                            backDrawRodData: BackgroundBarChartRodData(
+                              toY: 0,
+                              color: Colors.grey[200],
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          )
+        : Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'No sales data available.',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          );
+  }
+
+  Widget buildReviewsAnalysis(List<ReviewData> reviewData, int totalReviews) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Reviews Analysis',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        if (reviewData.isNotEmpty && totalReviews > 0)
+          Container(
+            height: 300,
+            child: PieChart(
+              PieChartData(
+                sections: reviewData.map((data) {
+                  return PieChartSectionData(
+                    value: data.value,
+                    title: '${data.label}\n${data.value.toStringAsFixed(1)}%',
+                    titleStyle: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                    color: data.label == 'Positive' ? Colors.green : Colors.red,
+                    radius: 50,
+                  );
+                }).toList(),
+                borderData: FlBorderData(
+                  show: false,
+                ),
+                sectionsSpace: 0,
+              ),
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'No review data available.',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget formatChange(double value) {
+    return Icon(
+      value >= 0 ? Icons.arrow_upward_outlined : Icons.arrow_downward_outlined,
+      color: value >= 0 ? Colors.green : Colors.red,
     );
   }
 }

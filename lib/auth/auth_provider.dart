@@ -71,6 +71,7 @@ class AuthProviders with ChangeNotifier {
       _user = userCredential.user;
       notifyListeners();
     } catch (e) {
+      SnackBar(content: Text(e.toString()));
       throw Exception('Failed to sign in: $e');
     }
   }

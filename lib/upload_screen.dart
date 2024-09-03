@@ -86,28 +86,28 @@ class _UploadScreenState extends State<UploadScreen> {
   }
 
   Future<void> _saveProductToFirestore(String imageUrl) async {
-  CollectionReference products =
-      FirebaseFirestore.instance.collection('products');
+    CollectionReference products =
+        FirebaseFirestore.instance.collection('products');
 
-  List<String> colorHex = _selectedColors
-      .map((color) => '#${color.value.toRadixString(16)}')
-      .toList();
-final authProviders = Provider.of<AuthProviders>(context, listen: false);
-  final storeId = authProviders.storeId;
-  await products.add({
-    'title': _title,
-    'description': _description,
-    'price': _price,
-    'store': _storeName,
-    'storeId': storeId, // Include store ID here
-    'category': _selectedCategory,
-    'colors': colorHex,
-    'image': imageUrl,
-    'rate': 0.0,
-    'reviews': [],
-    'quantity': 1,
-  });
-}
+    List<String> colorHex = _selectedColors
+        .map((color) => '#${color.value.toRadixString(16)}')
+        .toList();
+    final authProviders = Provider.of<AuthProviders>(context, listen: false);
+    final storeId = authProviders.storeId;
+    await products.add({
+      'title': _title,
+      'description': _description,
+      'price': _price,
+      'store': _storeName,
+      'storeId': storeId,
+      'category': _selectedCategory,
+      'colors': colorHex,
+      'image': imageUrl,
+      'rate': 0.0,
+      'reviews': [],
+      'quantity': 1,
+    });
+  }
 
   Future<void> _uploadProduct() async {
     if (_formKey.currentState!.validate()) {
@@ -197,6 +197,24 @@ final authProviders = Provider.of<AuthProviders>(context, listen: false);
         );
       },
     );
+  }
+
+  Widget _buildColorPreview() {
+    return _selectedColors.isEmpty
+        ? const Text('No colors selected')
+        : Wrap(
+            spacing: 8.0,
+            runSpacing: 4.0,
+            children: _selectedColors
+                .map((color) => Container(
+                      decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(30)),
+                      width: 40,
+                      height: 40,
+                    ))
+                .toList(),
+          );
   }
 
   @override
@@ -289,6 +307,7 @@ final authProviders = Provider.of<AuthProviders>(context, listen: false);
                   decoration: const InputDecoration(labelText: 'Category'),
                 ),
                 const SizedBox(height: 10),
+                _buildColorPreview(),
                 ElevatedButton(
                   onPressed: _selectColors,
                   child: const Text('Select Colors'),
