@@ -17,10 +17,13 @@ class StoreStaticsProvider extends ChangeNotifier {
   int positiveReviews = 0;
   int negativeReviews = 0;
   int totalReviews = 0;
-
   List<double> last12MonthsSales = List.filled(12, 0.0);
+  List<double> last7DaysSales = List.filled(7, 0.0);
+  List<double> last30DaysSales = List.filled(30, 0.0);
 
-  Future<void> fetchStatistics(String storeId) async {
+  Future<void> fetchStatistics(
+    String storeId,
+  ) async {
     final DateTime now = DateTime.now();
     final DateTime startOfDay = DateTime(now.year, now.month, now.day);
     final DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
@@ -29,8 +32,7 @@ class StoreStaticsProvider extends ChangeNotifier {
     final DateTime startOfPreviousDay = startOfDay.subtract(Duration(days: 1));
     final DateTime startOfPreviousWeek =
         startOfWeek.subtract(Duration(days: 7));
-    final DateTime startOfPreviousMonth = startOfMonth
-        .subtract(Duration(days: 30)); // Approximation for simplicity
+    final DateTime startOfPreviousMonth = DateTime(now.year, now.month - 1, 1);
 
     try {
       // Fetch and calculate sales data
@@ -94,8 +96,10 @@ class StoreStaticsProvider extends ChangeNotifier {
       totalSales = _calculateSales(totalSale.docs);
       prevMonthTotalSales = prevMonthSales;
 
-      // Fetch and calculate sales data for the last 12 months
+      // Fetch and calculate sales data for the last 12 months, 7 days, and 30 days
       await _fetchLast12MonthsSales(storeId);
+      await _fetchLast7DaysSales(storeId);
+      await _fetchLast30DaysSales(storeId);
 
       // Calculate reviews
       positiveReviews = 0;
@@ -145,7 +149,6 @@ class StoreStaticsProvider extends ChangeNotifier {
 
   Future<void> _fetchLast12MonthsSales(String storeId) async {
     final DateTime now = DateTime.now();
-    final DateTime startOfMonth = DateTime(now.year, now.month, 1);
 
     for (int i = 0; i < 12; i++) {
       final DateTime startOfMonthForQuery =
@@ -163,40 +166,67 @@ class StoreStaticsProvider extends ChangeNotifier {
 
       last12MonthsSales[11 - i] = _calculateSales(salesQuery.docs);
     }
+    notifyListeners();
   }
 
-  double getSalesChangePercentage(double currentSales, double previousSales) {
-    if (previousSales == 0) return currentSales > 0 ? 100.0 : 0.0;
-    return ((currentSales - previousSales) / previousSales) * 100.0;
+  Future<void> _fetchLast7DaysSales(String storeId) async {
+    final DateTime now = DateTime.now();
+
+    for (int i = 0; i < 7; i++) {
+      final DateTime startOfDayForQuery =
+          DateTime(now.year, now.month, now.day - i);
+      final DateTime endOfDayForQuery =
+          DateTime(now.year, now.month, now.day - i + 1);
+
+      final salesQuery = await _firestore
+          .collection('orders')
+          .where('storeId', isEqualTo: storeId)
+          .where('date', isGreaterThanOrEqualTo: startOfDayForQuery)
+          .where('date', isLessThan: endOfDayForQuery)
+          .get();
+
+      last7DaysSales[6 - i] = _calculateSales(salesQuery.docs);
+    }
+    notifyListeners();
   }
 
-  double _calculateSales(List<QueryDocumentSnapshot> docs) {
-    return docs.fold(0.0, (sum, doc) {
-      final totalPrice = doc['totalPrice'];
+  Future<void> _fetchLast30DaysSales(String storeId) async {
+    final DateTime now = DateTime.now();
 
-      // Check if 'totalPrice' exists and is not null
-      if (totalPrice != null) {
-        if (totalPrice is int) {
-          return sum + totalPrice.toDouble();
-        } else if (totalPrice is double) {
-          return sum + totalPrice;
-        } else {
-          print('Unexpected totalPrice type: ${totalPrice.runtimeType}');
-        }
-      } else {
-        print('totalPrice is null or missing in document: ${doc.id}');
+    for (int i = 0; i < 30; i++) {
+      final DateTime startOfDayForQuery =
+          DateTime(now.year, now.month, now.day - i);
+      final DateTime endOfDayForQuery =
+          DateTime(now.year, now.month, now.day - i + 1);
+
+      print('Fetching sales from $startOfDayForQuery to $endOfDayForQuery');
+
+      try {
+        final salesQuery = await _firestore
+            .collection('orders')
+            .where('storeId', isEqualTo: storeId)
+            .where('date', isGreaterThanOrEqualTo: startOfDayForQuery)
+            .where('date', isLessThan: endOfDayForQuery)
+            .get();
+
+        last30DaysSales[29 - i] = _calculateSales(salesQuery.docs);
+        print('Sales for $startOfDayForQuery: ${last30DaysSales[29 - i]}');
+      } catch (e) {
+        print('Error fetching sales for $startOfDayForQuery: $e');
       }
-
-      return sum;
-    });
+    }
+    notifyListeners();
   }
 
   double getTodaySalesChange() =>
       getSalesChangePercentage(todaySales, prevDaySales);
+
   double getWeeklySalesChange() =>
       getSalesChangePercentage(weeklySales, prevWeekSales);
+
   double getMonthlySalesChange() =>
       getSalesChangePercentage(monthlySales, prevMonthSales);
+
   double getTotalRevenuePercentage() {
     if (totalSales == 0) return 0.0; // Avoid division by zero
     return (monthlySales / totalSales) * 100.0;
@@ -211,4 +241,23 @@ class StoreStaticsProvider extends ChangeNotifier {
   }
 
   List<double> getLast12MonthsSales() => last12MonthsSales;
+
+  double _calculateSales(List<QueryDocumentSnapshot> docs) {
+    return docs.fold(0.0, (sum, doc) {
+      final totalPrice = doc.get('totalPrice');
+      if (totalPrice is int) {
+        return sum + (totalPrice as int).toDouble();
+      } else if (totalPrice is double) {
+        return sum + totalPrice;
+      } else {
+        print('Unexpected totalPrice type: ${totalPrice.runtimeType}');
+        return sum;
+      }
+    });
+  }
+
+  double getSalesChangePercentage(double current, double previous) {
+    if (previous == 0) return (current > 0) ? 100.0 : 0.0;
+    return ((current - previous) / previous) * 100.0;
+  }
 }

@@ -1,11 +1,12 @@
 import 'package:ecommerceadmin/auth/auth_provider.dart';
+import 'package:ecommerceadmin/screens/dashboard_screen.dart';
 import 'package:ecommerceadmin/screens/register_store.dart';
-import 'package:ecommerceadmin/upload_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class StoreSignIn extends StatelessWidget {
-  StoreSignIn({super.key});
+  StoreSignIn({super.key, this.onTap});
+  final Function()? onTap;
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -53,8 +54,10 @@ class StoreSignIn extends StatelessWidget {
                     emailController.text,
                     passwordController.text,
                   );
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => UploadScreen()));
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => DashboardScreen()));
                 },
                 child: Text(
                   'Register Store',
@@ -66,12 +69,7 @@ class StoreSignIn extends StatelessWidget {
               children: [
                 Text("Don't have a store?"),
                 TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => RegisterStore()));
-                  },
+                  onPressed: onTap,
                   child: Text('Register Now',
                       style: TextStyle(color: Colors.deepPurple)),
                 ),

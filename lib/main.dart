@@ -1,7 +1,7 @@
+import 'package:ecommerceadmin/auth/auth_gate.dart';
 import 'package:ecommerceadmin/auth/auth_provider.dart';
 import 'package:ecommerceadmin/firebase_options.dart';
 import 'package:ecommerceadmin/provider/store_statics_provider.dart';
-import 'package:ecommerceadmin/screens/sign_in.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -25,9 +25,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProviders()),
         ChangeNotifierProvider(create: (_) => StoreStaticsProvider())
       ],
-      child: MaterialApp(
+      child: const MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: AdminSignIn(),
+        home: AuthGate(),
       ),
     );
   }
