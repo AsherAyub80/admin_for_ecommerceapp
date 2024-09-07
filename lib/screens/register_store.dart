@@ -1,4 +1,5 @@
 import 'package:ecommerceadmin/auth/auth_provider.dart';
+import 'package:ecommerceadmin/screens/dashboard_screen.dart';
 import 'package:ecommerceadmin/upload_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -62,7 +63,7 @@ class RegisterStore extends StatelessWidget {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => UploadScreen()));
+                            builder: (context) => DashboardScreen()));
                   } catch (e) {
                     print(e);
                   }

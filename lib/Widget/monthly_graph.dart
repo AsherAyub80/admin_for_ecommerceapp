@@ -162,20 +162,24 @@ class _MonthlySalesGraphState extends State<MonthlySalesGraph> {
                                 ),
                                 if (sales > 0)
                                   Positioned(
-                                    bottom:
-                                        barHeight / 2 - 10, // Center vertically
+                                    bottom: barHeight / 2 - 10,
                                     child: Container(
                                       width: barWidth +
                                           20, // Ensure width for text
                                       alignment: Alignment.center,
                                       child: Transform.rotate(
                                         angle: -1.5708,
-                                        child: Text(
-                                          '\$${sales.toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            '\$${barHeight >= 50 ? sales.toStringAsFixed(2) : sales.toStringAsFixed(0)}',
+                                            style: TextStyle(
+                                              fontSize: barHeight <= 50
+                                                  ? barHeight / 2
+                                                  : 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
                                           ),
                                         ),
                                       ),

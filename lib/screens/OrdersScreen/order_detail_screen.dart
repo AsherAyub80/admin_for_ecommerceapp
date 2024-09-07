@@ -34,17 +34,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       final orderRef =
           FirebaseFirestore.instance.collection('orders').doc(widget.orderId);
 
-      // Update the status of each item in the order
-      final updatedItems = widget.items.map((item) {
-        final itemMap = item as Map<String, dynamic>;
-        if (itemMap['email'] == widget.email) {
-          return {...itemMap, 'status': _selectedStatus};
-        }
-        return itemMap;
-      }).toList();
-
+      // Update only the status of the order document
       await orderRef.update({
-        'items': updatedItems,
+        'status': _selectedStatus,
       });
 
       Navigator.pop(context);
@@ -73,9 +65,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   children: [
                     Text('Customer Email: ${widget.email}'),
                     Text('Order ID: ${widget.orderId}'),
+                    Text(
+                        'Order Status: $_selectedStatus'), // Display status here
                   ],
                 ),
-                trailing: Text(' Status: $_selectedStatus'),
               ),
             ),
             DropdownButton<String>(
@@ -105,7 +98,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     subtitle: Text(
                         'Quantity: ${item['quantity']} - Price: \$${item['price']}'),
                     trailing: Text(
-                      'Status: ${item['status']}',
+                      'Status: ${_selectedStatus.toString()}',
                       style: TextStyle(fontSize: 15),
                     ),
                   );

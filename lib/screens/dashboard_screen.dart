@@ -28,9 +28,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _storeName = authProviders.storeName;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to fetch store details: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch store details: $e')),
+        );
+      }
     }
   }
 

@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerceadmin/Widget/custom_drawer.dart';
 import 'package:ecommerceadmin/auth/auth_provider.dart';
-import 'package:ecommerceadmin/screens/dashboard_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -11,7 +10,10 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
 
 class UploadScreen extends StatefulWidget {
-  const UploadScreen({super.key});
+  final String storeName;
+  final String storeEmail;
+  const UploadScreen(
+      {super.key, required this.storeName, required this.storeEmail});
 
   @override
   State<UploadScreen> createState() => _UploadScreenState();
@@ -224,7 +226,10 @@ class _UploadScreenState extends State<UploadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      drawer: CustomDrawer(),
+      drawer: CustomDrawer(
+        storeName: widget.storeName,
+        email: widget.storeEmail,
+      ),
       appBar: AppBar(
         title: const Text(
           'Upload products',
