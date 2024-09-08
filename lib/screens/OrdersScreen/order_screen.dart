@@ -36,11 +36,11 @@ class PendingOrders extends StatelessWidget {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData) {
-            return Center(child: const CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           final orders = snapshot.data!.docs;
-          print('Fetched orders: ${orders.map((doc) => doc.data()).toList()}');
+          debugPrint('Fetched orders: ${orders.map((doc) => doc.data()).toList()}');
 
           return ListView.builder(
             itemCount: orders.length,

@@ -111,8 +111,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       // Sales Summary Row
 
                       SizedBox(height: 32),
-                      buildRevenueContainer(
-                          provider, height, width, isWideScreen),
+                      LayoutBuilder(builder: (context, constraints) {
+                        final itemWidth = isWideScreen
+                            ? (constraints.maxWidth - 40) / 3
+                            : constraints.maxWidth - 32;
+                        return isWideScreen
+                            ? Row(
+                                children: [
+                                  buildRevenueContainer(
+                                      provider, height, width, isWideScreen),
+                                  SizedBox(width: 16),
+                                  buildTotalReview(
+                                      provider, height, width, isWideScreen)
+                                ],
+                              )
+                            : Column(
+                                children: [
+                                  buildRevenueContainer(
+                                      provider, height, width, isWideScreen),
+                                  SizedBox(height: 16),
+                                  buildTotalReview(
+                                      provider, height, width, isWideScreen)
+                                ],
+                              );
+                      }),
                       SizedBox(height: 32),
 
                       LayoutBuilder(
@@ -217,7 +239,7 @@ Widget buildSalesSummaryItem(
     width: width,
     padding: EdgeInsets.all(16.0),
     decoration: BoxDecoration(
-      color: Colors.grey.shade200,
+      color: Colors.deepPurple.shade200,
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
         BoxShadow(
@@ -250,7 +272,9 @@ Widget buildSalesSummaryItem(
               "${change.toStringAsFixed(2)}%",
               style: TextStyle(
                 fontSize: height * 0.02,
-                color: change >= 0 ? Colors.green : Colors.red,
+                color: change >= 0
+                    ? const Color.fromARGB(255, 7, 105, 11)
+                    : Colors.red,
               ),
             ),
           ],
@@ -260,13 +284,13 @@ Widget buildSalesSummaryItem(
   );
 }
 
-Widget buildRevenueContainer(StoreStaticsProvider provider, double height,
+Widget buildTotalReview(StoreStaticsProvider provider, double height,
     double width, bool isWideScreen) {
   return Center(
     child: Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade300,
+        color: Colors.deepPurple.shade200,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -277,7 +301,51 @@ Widget buildRevenueContainer(StoreStaticsProvider provider, double height,
           ),
         ],
       ),
-      width: isWideScreen ? width * 0.6 : width * 0.8,
+      width: isWideScreen ? width * 0.4 : width * 0.6,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Total Reviews',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: height * 0.024,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            "\$${provider.totalReviews}",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: height * 0.04,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 10),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget buildRevenueContainer(StoreStaticsProvider provider, double height,
+    double width, bool isWideScreen) {
+  return Center(
+    child: Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.deepPurple.shade200,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      width: isWideScreen ? width * 0.4 : width * 0.6,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -302,7 +370,7 @@ Widget buildRevenueContainer(StoreStaticsProvider provider, double height,
             'Total Revenue :${provider.getTotalRevenuePercentageChange() >= 0 ? '+' : "-"} ${provider.getTotalRevenuePercentageChange().toStringAsFixed(2)}%',
             style: TextStyle(
               color: provider.getTotalRevenuePercentageChange() >= 0
-                  ? Colors.green
+                  ? Color.fromARGB(255, 7, 105, 11)
                   : Colors.red,
               fontSize: height * 0.02,
               fontWeight: FontWeight.bold,
@@ -442,7 +510,7 @@ Widget buildReviewsAnalysis(List<ReviewData> reviewData, int totalReviews) {
 Widget formatChange(double value) {
   return Icon(
     value >= 0 ? Icons.arrow_upward_outlined : Icons.arrow_downward_outlined,
-    color: value >= 0 ? Colors.green : Colors.red,
+    color: value >= 0 ? Color.fromARGB(255, 7, 105, 11) : Colors.red,
   );
 }
 
