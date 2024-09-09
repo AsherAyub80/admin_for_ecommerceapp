@@ -112,15 +112,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       SizedBox(height: 32),
                       LayoutBuilder(builder: (context, constraints) {
-                        final itemWidth = isWideScreen
-                            ? (constraints.maxWidth - 40) / 3
-                            : constraints.maxWidth - 32;
                         return isWideScreen
                             ? Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
                                 children: [
                                   buildRevenueContainer(
                                       provider, height, width, isWideScreen),
-                                  SizedBox(width: 16),
                                   buildTotalReview(
                                       provider, height, width, isWideScreen)
                                 ],
@@ -302,26 +300,33 @@ Widget buildTotalReview(StoreStaticsProvider provider, double height,
         ],
       ),
       width: isWideScreen ? width * 0.4 : width * 0.6,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
         children: [
-          Text(
-            'Total Reviews',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: height * 0.024,
-            ),
+          FaIcon(FontAwesomeIcons.solidStar,
+              size: 35, color: Colors.deepPurple),
+          SizedBox(width: isWideScreen ? 15 : 10),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Total Reviews',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: height * 0.024,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                "${provider.totalReviews}",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: height * 0.04,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 10),
+            ],
           ),
-          SizedBox(height: 8),
-          Text(
-            "\$${provider.totalReviews}",
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: height * 0.04,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 10),
         ],
       ),
     ),
@@ -346,35 +351,44 @@ Widget buildRevenueContainer(StoreStaticsProvider provider, double height,
         ],
       ),
       width: isWideScreen ? width * 0.4 : width * 0.6,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
         children: [
-          Text(
-            'Total Revenue',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: height * 0.024,
-            ),
+          FaIcon(
+            FontAwesomeIcons.dollarSign,
+            size: 40,
+            color: Colors.deepPurple,
           ),
-          SizedBox(height: 8),
-          Text(
-            "\$${provider.totalSales.toStringAsFixed(2)}",
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: height * 0.04,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 10),
-          Text(
-            'Total Revenue :${provider.getTotalRevenuePercentageChange() >= 0 ? '+' : "-"} ${provider.getTotalRevenuePercentageChange().toStringAsFixed(2)}%',
-            style: TextStyle(
-              color: provider.getTotalRevenuePercentageChange() >= 0
-                  ? Color.fromARGB(255, 7, 105, 11)
-                  : Colors.red,
-              fontSize: height * 0.02,
-              fontWeight: FontWeight.bold,
-            ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Total Revenue',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: height * 0.024,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                "${provider.totalSales.toStringAsFixed(2)}",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: height * 0.04,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Total Revenue ${provider.getTotalRevenuePercentageChange() >= 0 ? '+' : "-"} ${provider.getTotalRevenuePercentageChange().toStringAsFixed(2)}%',
+                style: TextStyle(
+                  color: provider.getTotalRevenuePercentageChange() >= 0
+                      ? Color.fromARGB(255, 7, 105, 11)
+                      : Colors.red,
+                  fontSize: height * 0.02,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),
