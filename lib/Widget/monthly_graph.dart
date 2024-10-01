@@ -9,6 +9,7 @@ class MonthlySalesGraph extends StatefulWidget {
 
 class _MonthlySalesGraphState extends State<MonthlySalesGraph> {
   String _selectedRange = 'Last 12 Months'; // Default selection
+  int? _pressedBarIndex; // Track the index of the pressed bar
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +48,6 @@ class _MonthlySalesGraphState extends State<MonthlySalesGraph> {
     }
 
     final double maxSales = salesData.reduce((a, b) => a > b ? a : b);
-    // final double minSales = salesData.reduce((a, b) => a < b ? a : b);
 
     final List<Color> colors = [
       Colors.blue,
@@ -64,8 +64,6 @@ class _MonthlySalesGraphState extends State<MonthlySalesGraph> {
       Colors.pink,
     ];
 
-    // final bool is30Days = _selectedRange == 'Last 30 Days';
-
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -76,7 +74,6 @@ class _MonthlySalesGraphState extends State<MonthlySalesGraph> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           SizedBox(height: 16),
-          // Time Range Selector
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
@@ -92,6 +89,8 @@ class _MonthlySalesGraphState extends State<MonthlySalesGraph> {
                       if (selected) {
                         setState(() {
                           _selectedRange = range;
+                          _pressedBarIndex =
+                              null; // Reset index on range change
                         });
                       }
                     },
@@ -103,91 +102,86 @@ class _MonthlySalesGraphState extends State<MonthlySalesGraph> {
           SizedBox(height: 16),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: double.infinity,
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final double barWidth =
-                      24.0; // Consistent bar width for all ranges
-                  final double maxBarHeight = 200.0; // Maximum height for a bar
-                  final double dateLineHeight =
-                      20.0; // Height for the date line
-                  // final double chartWidth = is30Days
-                  //     ? constraints.maxWidth // Use the full width for 30 days
-                  //     : constraints.maxWidth *
-                  //         1.5; // Adjust chart width for 12 months
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final double barWidth = 24.0;
+                final double maxBarHeight = 200.0;
+                final double dateLineHeight = 20.0;
 
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: List.generate(salesData.length, (index) {
-                      final sales = salesData[index];
-                      final label = labels[index];
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(salesData.length, (index) {
+                    final sales = salesData[index];
+                    final label = labels[index];
 
-                      // Calculate bar height as a percentage of the maxBarHeight
-                      final barHeight = maxSales > 0
-                          ? (sales / maxSales) * maxBarHeight
-                          : 2.0;
+                    final barHeight =
+                        maxSales > 0 ? (sales / maxSales) * maxBarHeight : 2.0;
 
-                      // Get a color for the bar based on index
-                      final color = colors[index % colors.length];
+                    final color = colors[index % colors.length];
 
-                      return Container(
+                    return GestureDetector(
+                      onLongPress: () {
+                        setState(() {
+                          _pressedBarIndex =
+                              index; // Update the index on long press
+                        });
+                      },
+                      onLongPressUp: () {
+                        setState(() {
+                          _pressedBarIndex =
+                              null; // Reset index when long press is released
+                        });
+                      },
+                      child: Container(
                         width: barWidth,
-                        margin: EdgeInsets.symmetric(
-                            horizontal: 4.0), // Adjust horizontal margin
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                        height: barHeight + 40,
+                        margin: EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.bottomCenter,
                           children: [
-                            Stack(
-                              clipBehavior: Clip.none,
-                              alignment: Alignment.bottomCenter,
-                              children: [
-                                Container(
-                                  width: barWidth,
-                                  height: barHeight.toDouble(),
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    borderRadius: BorderRadius.circular(4.0),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        spreadRadius: 2,
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
+                            // Bar
+                            Container(
+                              width: barWidth,
+                              height: barHeight.toDouble(),
+                              decoration: BoxDecoration(
+                                color: color,
+                                borderRadius: BorderRadius.circular(4.0),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    spreadRadius: 2,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
                                   ),
-                                ),
-                                if (sales > 0)
-                                  Positioned(
-                                    bottom: barHeight / 2 - 10,
-                                    child: Container(
-                                      width: barWidth +
-                                          20, // Ensure width for text
-                                      alignment: Alignment.center,
-                                      child: Transform.rotate(
-                                        angle: -1.5708,
-                                        child: FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            '\$${barHeight >= 50 ? sales.toStringAsFixed(2) : sales.toStringAsFixed(0)}',
-                                            style: TextStyle(
-                                              fontSize: barHeight <= 50
-                                                  ? barHeight / 2
-                                                  : 10,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
+                                ],
+                              ),
+                            ),
+                            // Tooltip
+                            if (_pressedBarIndex == index && sales > 0)
+                              Positioned(
+                                bottom: barHeight + 5, // Position above the bar
+                                child: Container(
+                                  height: sales.toString().length + 20,
+                                  width: 40 + sales.toString().length * 10,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black,
+                                    borderRadius: BorderRadius.circular(4.0),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '\$${sales.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ),
-                              ],
-                            ),
+                                ),
+                              ),
                             SizedBox(height: 4),
+                            // Date label
                             Container(
                               width: barWidth,
                               height: dateLineHeight,
@@ -203,11 +197,11 @@ class _MonthlySalesGraphState extends State<MonthlySalesGraph> {
                             ),
                           ],
                         ),
-                      );
-                    }),
-                  );
-                },
-              ),
+                      ),
+                    );
+                  }),
+                );
+              },
             ),
           ),
         ],
@@ -234,6 +228,6 @@ class _MonthlySalesGraphState extends State<MonthlySalesGraph> {
       'Nov',
       'Dec'
     ];
-    return monthNames[month - 1]; // Adjust for 0-based index
+    return monthNames[month - 1];
   }
 }

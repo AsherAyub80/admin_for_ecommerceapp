@@ -46,6 +46,8 @@ class DeliveredOrdered extends StatelessWidget {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index].data() as Map<String, dynamic>;
+              final paymentMethod = order['paymentMethod'];
+              final address = order['address'];
               final orderId = orders[index].id;
               final items = order['items'] as List<dynamic>;
               final userDetail = items.isNotEmpty
@@ -76,7 +78,7 @@ class DeliveredOrdered extends StatelessWidget {
                                 order['status'], // Use status from the document
                             username: userDetail['username'],
                             email: userDetail['email'],
-                            items: items,
+                            items: items, orderAddress: address, paymentMethod: paymentMethod,
                           ),
                         ),
                       );
