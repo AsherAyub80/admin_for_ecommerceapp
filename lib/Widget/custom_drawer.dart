@@ -1,5 +1,6 @@
 import 'package:ecommerceadmin/screens/OrdersScreen/deliveredordered.dart';
 import 'package:ecommerceadmin/screens/OrdersScreen/inprogressscreen.dart';
+import 'package:ecommerceadmin/screens/OrdersScreen/on_the_way.dart';
 import 'package:ecommerceadmin/screens/settings/setting_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -46,27 +47,29 @@ class _CustomDrawerState extends State<CustomDrawer> {
                       backgroundColor: Colors.blue,
                     ),
                     SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          widget.storeName,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.storeName,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          widget.email,
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
+                          SizedBox(height: 4),
+                          Text(
+                            widget.email,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: widget.email.length > 10 ? 14 : 16,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -194,7 +197,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
         ),
         AnimatedContainer(
           duration: Duration(milliseconds: 300),
-          height: isExpand ? 160 : 0,
+          height: isExpand ? 210 : 0,
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
@@ -214,7 +217,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
               ),
               _buildOrderTile(
                 FontAwesomeIcons.listCheck,
-                'In Progress',
+                'Preparing',
                 () {
                   Navigator.push(
                       context,
@@ -227,8 +230,22 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 iconColor,
               ),
               _buildOrderTile(
+                FontAwesomeIcons.truck,
+                'On the way',
+                () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => OnTheWay(
+                                storeName: widget.storeName,
+                                storeEmail: widget.email,
+                              )));
+                },
+                iconColor,
+              ),
+              _buildOrderTile(
                 FontAwesomeIcons.solidCircleCheck,
-                'Done',
+                'Delivered',
                 () {
                   Navigator.push(
                       context,

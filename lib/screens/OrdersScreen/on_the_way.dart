@@ -5,30 +5,34 @@ import 'package:ecommerceadmin/screens/OrdersScreen/order_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class PendingOrders extends StatelessWidget {
+class OnTheWay extends StatefulWidget {
+  const OnTheWay(
+      {super.key, required this.storeName, required this.storeEmail});
   final String storeName;
   final String storeEmail;
-  const PendingOrders(
-      {super.key, required this.storeName, required this.storeEmail});
 
+  @override
+  State<OnTheWay> createState() => _OnTheWayState();
+}
+
+class _OnTheWayState extends State<OnTheWay> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AuthProviders>(context);
     final user = provider.storeId;
-
     return Scaffold(
-      drawer: CustomDrawer(
-        storeName: storeName,
-        email: storeEmail,
-      ),
       appBar: AppBar(
-        title: Text('Pending Orders'),
+        title: Text('On the way Orders'),
+      ),
+      drawer: CustomDrawer(
+        storeName: widget.storeName,
+        email: widget.storeEmail,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('orders')
             .where('storeId', isEqualTo: user)
-            .where('status', isEqualTo: 'Pending')
+            .where('status', isEqualTo: 'On the way')
             .snapshots(), // Ensure real-time
 
         builder: (context, snapshot) {
@@ -36,20 +40,20 @@ class PendingOrders extends StatelessWidget {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: const CircularProgressIndicator());
           }
 
           final orders = snapshot.data!.docs;
-          debugPrint('Fetched orders: ${orders.map((doc) => doc.data()).toList()}');
+          print('Fetched orders: ${orders.map((doc) => doc.data()).toList()}');
 
           return ListView.builder(
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index].data() as Map<String, dynamic>;
+              final address = order['address'];
+              final paymentMethod = order['paymentMethod'];
               final orderId = orders[index].id;
               final items = order['items'] as List<dynamic>;
-              final orderAddress=order['address'];
-              final paymentType=order['paymentMethod'];
               final userDetail = items.isNotEmpty
                   ? items[0]
                   : {'username': 'Unknown', 'email': 'Unknown'};
@@ -73,14 +77,13 @@ class PendingOrders extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) => OrderDetailScreen(
-                            orderAddress: orderAddress,
-                            paymentMethod:paymentType,
                             orderId: orderId,
                             initialStatus:
                                 order['status'], // Use status from the document
                             username: userDetail['username'],
                             email: userDetail['email'],
-                            items: items,
+                            items: items, orderAddress: address,
+                            paymentMethod: paymentMethod,
                           ),
                         ),
                       );
@@ -97,65 +100,65 @@ class PendingOrders extends StatelessWidget {
       ),
     );
   }
+}
 
-  Future<void> _backupOrder(String orderId) async {
-    try {
-      final orderDoc = await FirebaseFirestore.instance
-          .collection('orders')
+Future<void> _backupOrder(String orderId) async {
+  try {
+    final orderDoc = await FirebaseFirestore.instance
+        .collection('orders')
+        .doc(orderId)
+        .get();
+
+    if (orderDoc.exists) {
+      await FirebaseFirestore.instance
+          .collection('order_backups')
           .doc(orderId)
-          .get();
-
-      if (orderDoc.exists) {
-        await FirebaseFirestore.instance
-            .collection('order_backups')
-            .doc(orderId)
-            .set(orderDoc.data()!);
-        print('Order backed up successfully');
-      } else {
-        print('Order does not exist');
-      }
-    } catch (e) {
-      print('Failed to back up order: $e');
+          .set(orderDoc.data()!);
+      print('Order backed up successfully');
+    } else {
+      print('Order does not exist');
     }
+  } catch (e) {
+    print('Failed to back up order: $e');
   }
+}
 
-  void _confirmDelete(BuildContext context, String orderId) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Delete Order'),
-          content: Text('Are you sure you want to delete this order?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                try {
-                  await _backupOrder(orderId); // Backup before deleting
-                  await FirebaseFirestore.instance
-                      .collection('orders')
-                      .doc(orderId)
-                      .delete();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Order deleted successfully')),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to delete order: $e')),
-                  );
-                }
-                Navigator.of(context).pop();
-              },
-              child: Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+void _confirmDelete(BuildContext context, String orderId) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text('Delete Order'),
+        content: Text('Are you sure you want to delete this order?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                await _backupOrder(orderId); // Backup before deleting
+                await FirebaseFirestore.instance
+                    .collection('orders')
+                    .doc(orderId)
+                    .delete();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Order deleted successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to delete order: $e')),
+                );
+              }
+              Navigator.of(context).pop();
+            },
+            child: Text('Delete'),
+          ),
+        ],
+      );
+    },
+  );
 }

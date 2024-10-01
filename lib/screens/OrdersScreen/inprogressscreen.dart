@@ -22,7 +22,7 @@ class InProgressScreen extends StatelessWidget {
         email: storeEmail,
       ),
       appBar: AppBar(
-        title: Text('Pending Orders'),
+        title: Text('Prepairings Orders'),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -46,6 +46,8 @@ class InProgressScreen extends StatelessWidget {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index].data() as Map<String, dynamic>;
+              final address = order['address'];
+              final paymentMethod = order['paymentMethod'];
               final orderId = orders[index].id;
               final items = order['items'] as List<dynamic>;
               final userDetail = items.isNotEmpty
@@ -76,7 +78,8 @@ class InProgressScreen extends StatelessWidget {
                                 order['status'], // Use status from the document
                             username: userDetail['username'],
                             email: userDetail['email'],
-                            items: items,
+                            items: items, orderAddress: address,
+                            paymentMethod: paymentMethod,
                           ),
                         ),
                       );
