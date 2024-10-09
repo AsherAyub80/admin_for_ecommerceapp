@@ -28,7 +28,7 @@ class InProgressScreen extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('orders')
             .where('storeId', isEqualTo: user)
-            .where('status', isEqualTo: 'In Progress')
+            .where('status', isEqualTo: 'Preparing')
             .snapshots(), // Ensure real-time
 
         builder: (context, snapshot) {

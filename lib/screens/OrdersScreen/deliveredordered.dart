@@ -22,7 +22,7 @@ class DeliveredOrdered extends StatelessWidget {
         email: storeEmail,
       ),
       appBar: AppBar(
-        title: Text('Pending Orders'),
+        title: Text('Delivered Orders'),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -78,7 +78,8 @@ class DeliveredOrdered extends StatelessWidget {
                                 order['status'], // Use status from the document
                             username: userDetail['username'],
                             email: userDetail['email'],
-                            items: items, orderAddress: address, paymentMethod: paymentMethod,
+                            items: items, orderAddress: address,
+                            paymentMethod: paymentMethod,
                           ),
                         ),
                       );

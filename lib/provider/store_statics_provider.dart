@@ -120,16 +120,16 @@ class StoreStaticsProvider extends ChangeNotifier {
             if (rating is int) {
               final ratingAsDouble = rating.toDouble();
               totalReviews++;
-              if (ratingAsDouble >= 4) {
+              if (ratingAsDouble >= 3) {
                 positiveReviews++;
-              } else if (ratingAsDouble <= 2) {
+              } else if (ratingAsDouble <3) {
                 negativeReviews++;
               }
             } else if (rating is double) {
               totalReviews++;
-              if (rating >= 4) {
+              if (rating >= 3) {
                 positiveReviews++;
-              } else if (rating <= 2) {
+              } else if (rating <3) {
                 negativeReviews++;
               }
             } else {

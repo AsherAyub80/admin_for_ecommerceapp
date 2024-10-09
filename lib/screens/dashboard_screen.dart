@@ -112,6 +112,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       SizedBox(height: 32),
                       LayoutBuilder(builder: (context, constraints) {
+                        print(negativePercentage);
                         return isWideScreen
                             ? Row(
                                 mainAxisAlignment:
